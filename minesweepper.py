@@ -71,7 +71,7 @@ chatlist = {
                "从Windows8起，扫雷并不再随附于系统，而是需要用户自行下载","由于国际反地雷组织的抗议，Windows2000意大利版在安装时，用一个名叫《花田》的游戏替换《扫雷》",
                "扫雷玩法简单但同时考验了玩家的逻辑与运气，火爆全世界"],
     'tips'  : ["扫雷的规则很简单，翻开所有安全区你就赢啦","左键翻开区块，右键标定或取消旗子",
-               "区块上的数字代表以其为中心的九宫格内存在地雷的数量","点到地雷你就炸啦",
+               "区块上的数字代表以其为中心的九宫格内存在地雷的数量","点到地雷你就炸啦","长按区块以高亮周边未翻开区块"
                "如果你给我磕三个响头的话，我可以给你标个地雷(指向左键)","向我鞠三个躬我就告诉你一个安全点(指向右键)",
                "区块附近标全地雷后，双击区块可以快速翻开周边，不过如果你标错地雷的话..."],
     'easter': ["“5...2...0”，这段代码啥意思啊？删了删了",'“"5"是"我"，"4"为"是"，我是.....谁？”，这句代码谁写的啊？'],
@@ -183,16 +183,20 @@ class mine:
         self.scaner = tk.Label(zone,text=self.minescan,font=('microsoft yahei',12,'bold'),
                                fg=fg_sel.get(str(self.minescan),"Gainsboro"),bg=("Red" if self.index in bomb else "Gainsboro"))
         self.cover = tk.Button(zone, width=3, height=1, bd=2)
-        self.bg.bind("<Double-Button-1>",self.click)
-        self.scaner.bind("<Double-Button-1>",self.click)
-        self.cover.bind("<ButtonRelease-1>",self.click)
-        self.cover.bind("<ButtonRelease-3>",self.click)
+        self.bg.bind("<Button-1>",self.hdclick)
+        self.bg.bind("<ButtonRelease-1>",self.hdclick)
+        self.scaner.bind("<Button-1>",self.hdclick)
+        self.scaner.bind("<ButtonRelease-1>",self.hdclick)
+        self.bg.bind("<Double-Button-1>",self.dbclick)
+        self.scaner.bind("<Double-Button-1>",self.dbclick)
+        self.cover.bind("<ButtonRelease-1>",self.cvclick)
+        self.cover.bind("<ButtonRelease-3>",self.cvclick)
         self.bg.grid(column=self.col,row=self.row)
         self.scaner.grid(column=self.col,row=self.row)
         self.cover.grid(column=self.col,row=self.row)
         self.uncover = False
         self.flag = False
-    def click(self,event):
+    def cvclick(self,event): # click function on cover
         Annoy.chat()
         _type = str(event)
         if "ButtonRelease" in _type: # mouse release
@@ -200,12 +204,24 @@ class mine:
                 self.detect()
             if event.num == 3: # right
                 self.setflag()
-        if "ButtonPress" in _type and (event.num == 1): # left
+    def dbclick(self,event):
+        Annoy.chat()
+        _type = str(event)
+        if "ButtonPress" in _type:
             nearby_flag = len(set(self.nearby).intersection(set(flaged)))
             if nearby_flag == self.minescan: # uncover nearby mines if nearby flags == nearby bombs
                 for near in self.nearby:
                     if not mines[near].uncover:
                         mines[near].detect()
+    def hdclick(self,event):
+        Annoy.chat()
+        _type = str(event)
+        for near in self.nearby:
+            if (near in cur) and (near not in flaged):
+                if "ButtonPress" in _type:
+                    mines[near].cover['bg'] = 'PaleGreen'
+                else:
+                    mines[near].cover['bg'] = 'SystemButtonFace'
     def detect(self):
         global cur
         global finish
