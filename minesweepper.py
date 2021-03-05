@@ -73,7 +73,7 @@ chatlist = {
     'tips'  : ["扫雷的规则很简单，翻开所有安全区你就赢啦","左键翻开区块，右键标定或取消旗子",
                "区块上的数字代表以其为中心的九宫格内存在地雷的数量","点到地雷你就炸啦","长按区块以高亮周边未翻开区块"
                "如果你给我磕三个响头的话，我可以给你标个地雷(指向左键)","向我鞠三个躬我就告诉你一个安全点(指向右键)",
-               "区块附近标全地雷后，双击区块可以快速翻开周边，不过如果你标错地雷的话..."],
+               "区块附近标全地雷后，双击区块可以快速翻开周边，不过如果你标错地雷的话...","区块附近的安全区全翻开后，双击区块可以快速标记周边未翻开的地雷"],
     'easter': ["“5...2...0”，这段代码啥意思啊？删了删了",'“"5"是"我"，"4"为"是"，我是.....谁？”，这句代码谁写的啊？'],
     'finish': ["别瞎点了，快重新开始吧","你就算点穿屏幕都不会有其它的东西的","咱们重开一局好不好"]
 }
@@ -208,13 +208,20 @@ class mine:
         Annoy.chat()
         _type = str(event)
         if "ButtonPress" in _type:
-            nearby_flag = len(set(self.nearby).intersection(set(flaged)))
-            if nearby_flag == self.minescan: # uncover nearby mines if nearby flags == nearby bombs
+            nearby_flagged = set(self.nearby).intersection(set(flaged))
+            nearby_flag = len(nearby_flagged)
+            nearby_coverd = list(set(self.nearby).intersection(set(cur)))
+            nearby_cover = len(nearby_coverd)
+            if nearby_flag == self.nearby_bombs: # uncover nearby mines if nearby flags == nearby bombs
                 for near in self.nearby:
                     if not mines[near].uncover:
                         mines[near].detect()
+            elif nearby_cover == self.nearby_bombs: # flag nearby cover mines if nearby_cover == nearby bombs
+                for index in nearby_coverd:
+                    if not mines[index].flag:
+                        mines[index].setflag()
     def hdclick(self,event):
-        Annoy.chat()
+        if finish: return
         _type = str(event)
         for near in self.nearby:
             if (near in cur) and (near not in flaged):
