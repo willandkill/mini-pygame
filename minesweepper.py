@@ -111,10 +111,17 @@ class AnnoyBot:
                 self.say("没有提示啦")
             else:
                 if ("ButtonPress" in _type) and (event.num == 1): # left # request bomb hints
-                    hint_bomb = [] # find a unflagged bomb with the least nearby_bombs
-                    for index in bomb: # find all unflagged bombs and record its nearby_bombs
-                        if index not in flaged:
-                            hint_bomb.append([mines[index].nearby_bombs,index])
+                    hint_bomb = [] # find a unflagged bomb that has an uncover nearby zone which its nearby bombs are least flagged
+                    for index in bomb: # iterate bombs
+                        if index not in flaged: # find unflagged bomb
+                            least_bombs_minus_flagged = 9
+                            for near_index in mines[index].nearby: # iterate bomb's nearby zones
+                                if mines[near_index].uncover: # find nearby zone that is uncovered
+                                    nearby_flagged = len(set(mines[near_index].nearby).intersection(set(flaged)))
+                                    nearby_bombs_minus_flagged = mines[near_index].nearby_bombs - nearby_flagged
+                                    if 0 < nearby_bombs_minus_flagged < least_bombs_minus_flagged:
+                                        least_bombs_minus_flagged = nearby_bombs_minus_flagged
+                            hint_bomb.append([least_bombs_minus_flagged,index])
                     if not len(hint_bomb): # there's no bomb that is not flagged
                         if len(flaged) == bomb_num: # only bomb is flagged
                             self.say(random.choice(["别逗，你都标完所有雷了","就这些雷啊，没别的了"]))
@@ -133,13 +140,13 @@ class AnnoyBot:
                         index = hint_bomb[0][1]
                         mines[index].setflag()
                         mines[index].cover['bg'] = "DodgerBlue"
-                        self.say(random.choice(["这颗雷附近的雷比较少","帮你标了一颗雷"]))
+                        self.say(random.choice(["这颗雷对你帮助比较大","帮你搞定了一个困难的抉择","帮你标了一颗雷"]))
                 elif ("ButtonPress" in _type) and (event.num == 3): # right # request safe zone
                     hint_zone = [] # find a safe zone with the least nearby_bombs
-                    for index in cur: # find all coverd-unflagged zone and record its nearby_bombs
+                    for index in cur: # find all covered-unflagged zone and record its nearby_bombs
                         if (index not in bomb) and (index not in flaged):
                             hint_zone.append([mines[index].nearby_bombs,index])
-                    if not len(hint_zone): # there's no zone left uncoverd or unflagged
+                    if not len(hint_zone): # there's no zone left uncovered or unflagged
                         misflag = []
                         for index in flaged:
                             if index not in bomb:
@@ -303,7 +310,6 @@ def CreateZone():
     global mines
     global minezone
     global zone_created
-    minezone = tk.Frame(bd=5,relief="ridge")
     mines = [mine(minezone,i) for i in range(num)]
     minezone.pack(expand="yes",padx=8,pady=8,side="left",anchor='center')
     zone_created = 1
@@ -401,7 +407,9 @@ def StartGame():
     global finish
     global lose
     global win
-    if zone_created: minezone.pack_forget()
+    global minezone
+    if zone_created: minezone.destroy()
+    minezone = tk.Frame(bd=5,relief="ridge")
     finish = 0
     lose = 0
     win = 0
