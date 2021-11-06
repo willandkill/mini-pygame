@@ -7,11 +7,11 @@ import getpass
 usr = getpass.getuser()
 zone_row = 3
 zone_col = 3
-num = zone_row*zone_col
-cur = list(range(num))
-bomb = [4]
+num = zone_row*zone_col # total numbers of mines
+cur = list(range(num)) # current mines that are still uncovered
+bomb = [4] # mines that are bombs
 bomb_num = len(bomb)
-flaged = []
+flaged = [] # mines that are flagged
 global mines
 global minezone
 finish = 0
@@ -20,7 +20,7 @@ lose = 0
 win = 0
 level = "easy"
 #====================================#
-fg_sel = {
+fg_sel = { # font color according to it's value
 "X" : 'Black',
 "0" : 'Gainsboro',
 "1" : 'Blue',
@@ -32,7 +32,7 @@ fg_sel = {
 "7" : 'SaddleBrown',
 "8" : 'Indigo'
 }
-comment = {
+comment = { # comments for annoy_bot to select
     'easter_start': ["恭喜你触发小彩蛋","你怎么知道这个的？","呀，被你猜到了"],
     'easter_win'  : ["彩蛋就别玩了吧","绿色的彩蛋"],
     'easter_lose' : ["看图说话","红色的彩蛋"],
@@ -64,7 +64,7 @@ comment = {
     'hell_win'    : ["运气太好了","没想到你真能赢","厉害厉害，佩服佩服","感觉运气被透支"],
     'hell_lose'   : ["能赢才怪事","输了不丢人","就没想过你能赢","没几个人能玩通这种难度"]
 }
-chatlist = {
+chatlist = { # chats for annoy_bot to select
     'info' : ["你知道吗，这个程序有相当部分容量是我的废话","扫雷最早可以追溯到Jerimac Ratliff于1973年推出的名为“Cube”的游戏",
                "九十年代初，Curt Johnson制作了最初的扫雷，发布于IBM旗下的OS/2系统上","加拿大的微软员工Robert Donner将本作移植到了Windows操作系统上",
                "1992年4月6日，Windows3.1x正式更新，《扫雷》代替《黑白棋》加入操作系统","扫雷最初被加入到Windows里是为了训练用户的鼠标左右键操作能力",
@@ -111,17 +111,20 @@ class AnnoyBot:
                 self.say("没有提示啦")
             else:
                 if ("ButtonPress" in _type) and (event.num == 1): # left # request bomb hints
-                    hint_bomb = [] # find a unflagged bomb that has an uncover nearby zone which its nearby bombs are least flagged
-                    for index in bomb: # iterate bombs
-                        if index not in flaged: # find unflagged bomb
-                            least_bombs_minus_flagged = 9
-                            for near_index in mines[index].nearby: # iterate bomb's nearby zones
-                                if mines[near_index].uncover: # find nearby zone that is uncovered
+                    hint_bomb = [] # find a unflagged bomb(that has uncovered nearby zone(which its nearby bombs are least flagged))
+                                   # 找到一个未标记的地雷,在它周边存在已翻开的区块,分别对这些区块周边的情况进行运算(炸弹数-标记数),保留最小值
+                                   # 这是为了找到一个地雷,通过标记它可以使一个已翻开的区块最接近完成排雷工作,所以需要最小值
+                    for index in bomb: # iterate bombs # 遍历炸弹列表
+                        if index not in flaged: # find unflagged bomb # 如果该炸弹未标记
+                            least_bombs_minus_flagged = 9 # inital threshold # 设定比较的初始值,9就意味着周边全是炸弹但没有一个标记
+                            for near_index in mines[index].nearby: # iterate bomb's nearby zones # 遍历该炸弹的周边
+                                if mines[near_index].uncover: # find nearby zone that is uncovered # 如果该周边已经被翻开
+                                    # 获取该周边已经被标记的数量,通过该周边的nearby和flaged列表的交集求得
                                     nearby_flagged = len(set(mines[near_index].nearby).intersection(set(flaged)))
-                                    nearby_bombs_minus_flagged = mines[near_index].nearby_bombs - nearby_flagged
-                                    if 0 < nearby_bombs_minus_flagged < least_bombs_minus_flagged:
+                                    nearby_bombs_minus_flagged = mines[near_index].nearby_bombs - nearby_flagged # 计算该周边的(炸弹数-标记数)
+                                    if 0 < nearby_bombs_minus_flagged < least_bombs_minus_flagged: # 与目前保留的最小值比较,小于则更新阈值上限,为0则说明已经标记完成,不应纳入考虑
                                         least_bombs_minus_flagged = nearby_bombs_minus_flagged
-                            hint_bomb.append([least_bombs_minus_flagged,index])
+                            hint_bomb.append([least_bombs_minus_flagged,index]) # 记录炸弹周边区块(炸弹数-标记数)的最小值+该炸弹编号
                     if not len(hint_bomb): # there's no bomb that is not flagged
                         if len(flaged) == bomb_num: # only bomb is flagged
                             self.say(random.choice(["别逗，你都标完所有雷了","就这些雷啊，没别的了"]))
@@ -136,7 +139,7 @@ class AnnoyBot:
                             mines[index].cover['bg'] = "yellow"
                             self.say("你这颗雷标错了")
                     else:
-                        hint_bomb = sorted(hint_bomb)
+                        hint_bomb = sorted(hint_bomb) # sort this list according to least_bombs_minus_flagged
                         index = hint_bomb[0][1]
                         mines[index].setflag()
                         mines[index].cover['bg'] = "DodgerBlue"
@@ -148,7 +151,7 @@ class AnnoyBot:
                             hint_zone.append([mines[index].nearby_bombs,index])
                     if not len(hint_zone): # there's no zone left uncovered or unflagged
                         misflag = []
-                        for index in flaged:
+                        for index in flaged: # find one mistaken flag and unflag it
                             if index not in bomb:
                                 misflag.append(index)
                         index = random.choice(misflag)
@@ -157,19 +160,21 @@ class AnnoyBot:
                         mines[index].cover['bg'] = "yellow"
                         self.say("全都插上旗子了我怎么给你指点？大发慈悲的告诉你这个标错了")
                     else:
-                        hint_zone = sorted(hint_zone)
+                        hint_zone = sorted(hint_zone)# sort this list according to nearby_bombs
                         index = hint_zone[0][1]
                         mines[index].detect()
                         mines[index].bg['bg'] = "SkyBlue"
                         mines[index].scaner['bg'] = "SkyBlue"
                         self.say(random.choice(["帮你翻开一个安全区咯","神之一指"]))
-                self.hintcd -= 1
+                self.hintcd -= 1 # consume 1 hint
 
 class mine:
     def __init__(self,zone,index):
+        # 根据index获取该区块的行列号
         self.row = index // zone_col
         self.col = index % zone_col
         self.index = index
+        # 根据行列号获取周边九宫格的行列号,如果在边缘则特殊处理
         u_row = [] if self.row == 0          else [self.row-1]
         d_row = [] if self.row == zone_row-1 else [self.row+1]
         nearby_row = sorted([self.row] + u_row + d_row)
@@ -179,17 +184,17 @@ class mine:
         self.nearby = []
         for _row in nearby_row:
             for _col in nearby_col:
-                self.nearby.append(_row*zone_col+_col)
-        self.nearby.remove(self.index)
+                self.nearby.append(_row*zone_col+_col) # 根据上面得到的周边行列号得到周边区块的index,包括自身的index
+        self.nearby.remove(self.index) # 从周边区块列表中除以自身index
         self.nearby_bombs = 0
         for near in self.nearby:
             if near in bomb:
-                self.nearby_bombs += 1
-        self.minescan = "X" if self.index in bomb else (self.nearby_bombs if self.nearby_bombs else "")
-        self.bg = tk.Frame(zone,width=31,height=30,bd=1,relief="sunken",bg=("Red" if self.index in bomb else "Gainsboro"))
+                self.nearby_bombs += 1 # 获取周边区块炸弹数量
+        self.minescan = "X" if self.index in bomb else (self.nearby_bombs if self.nearby_bombs else "") # 根据自身是否为炸弹,和周边炸弹数量得到区块显示文本
+        self.bg = tk.Frame(zone,width=31,height=30,bd=1,relief="sunken",bg=("Red" if self.index in bomb else "Gainsboro")) # 创建区块底板
         self.scaner = tk.Label(zone,text=self.minescan,font=('microsoft yahei',12,'bold'),
-                               fg=fg_sel.get(str(self.minescan),"Gainsboro"),bg=("Red" if self.index in bomb else "Gainsboro"))
-        self.cover = tk.Button(zone, width=3, height=1, bd=2)
+                               fg=fg_sel.get(str(self.minescan),"Gainsboro"),bg=("Red" if self.index in bomb else "Gainsboro")) # 创建区块显示图案
+        self.cover = tk.Button(zone, width=3, height=1, bd=2) # 创建区块封盖
         self.bg.bind("<Button-1>",self.hdclick)
         self.bg.bind("<ButtonRelease-1>",self.hdclick)
         self.scaner.bind("<Button-1>",self.hdclick)
@@ -211,7 +216,7 @@ class mine:
                 self.detect()
             if event.num == 3: # right
                 self.setflag()
-    def dbclick(self,event):
+    def dbclick(self,event): # double click
         Annoy.chat()
         _type = str(event)
         if "ButtonPress" in _type:
@@ -227,7 +232,7 @@ class mine:
                 for index in nearby_coverd:
                     if not mines[index].flag:
                         mines[index].setflag()
-    def hdclick(self,event):
+    def hdclick(self,event): # hold click
         if finish: return
         _type = str(event)
         for near in self.nearby:
