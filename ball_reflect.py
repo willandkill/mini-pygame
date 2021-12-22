@@ -4,7 +4,6 @@ import sys
 import pygame
 import random
 import math
-import traceback
 
 pygame.init()
 size = width,height = 800,600
@@ -39,7 +38,6 @@ class Ball(pygame.sprite.Sprite):
         else:
             self.image = pygame.Surface([2*self.radius]*2)
             self.image.set_colorkey(transparent)
-        self.font = pygame.font.Font(None,30)
         self.draw_background()
         self.rect = self.image.get_rect()
         self.rect.topleft = pos
@@ -50,7 +48,8 @@ class Ball(pygame.sprite.Sprite):
     def draw_background(self):
         self.image.fill(transparent)
         pygame.draw.circle(self.image,self.color,[self.radius]*2,self.radius)
-        text = self.font.render(u'%s'%self.name,True,black)
+        font = pygame.font.Font(None,30)
+        text = font.render(u'%s'%self.name,True,black)
         text_rect = text.get_rect(center=[self.radius]*2)
         self.image.blit(text,text_rect)
     def update(self,_hitballs):
@@ -74,20 +73,22 @@ class Ball(pygame.sprite.Sprite):
             reflect_en = False
             print("veloce  degree %s"%math.degrees(veloce_radian))
             print("radian  degree %s"%math.degrees(radian))
-            print("reflect degree %s"%math.degrees(reflect_radian))
-            print("reflect is %s"%reflect_en)
             if (abs(veloce_radian)<=math.pi/2) and ((radian <= math.pi/2+veloce_radian) and (radian >= -math.pi/2+veloce_radian)):
                 reflect_en = True
             elif (veloce_radian>=math.pi/2) and ((radian >= -math.pi/2+veloce_radian) or (radian <= -math.pi/2+veloce_radian-math.pi)):
                 reflect_en = True
             elif (veloce_radian<=-math.pi/2) and ((radian >= math.pi/2+veloce_radian+math.pi) or (radian <= math.pi/2+veloce_radian)):
                 reflect_en = True
+            print("reflect degree %s"%math.degrees(reflect_radian))
+            print("reflect is %s"%reflect_en)
             if reflect_en:
                 xf = self.speed[0]*math.cos(reflect_radian)-self.speed[1]*math.sin(reflect_radian)
                 yf = self.speed[0]*math.sin(reflect_radian)+self.speed[1]*math.cos(reflect_radian)
             else:
                 xf,yf = self.speed[0],self.speed[1]
             self.speed = [xf,yf]
+            print("new vx = %s"%(self.speed[0]))
+            print("new vy = %s"%(self.speed[1]))
             # pause = True
             print("---------")
         if self.rect.left < 0 or self.rect.right > width:
@@ -132,7 +133,7 @@ pygame.display.update()
 
 balls = []
 ball_list = [(white,50,[0,0],[3,3]),(red,30,[200,300],[-2,2])]
-for _i in range(random.randint(2,4)):
+for _i in range(random.randint(8,10)):
     ball_list.append(RandBall())
 for _color,_radius,_pos,_speed in ball_list:
     balls.append(Ball(_color,_radius,_pos,_speed))

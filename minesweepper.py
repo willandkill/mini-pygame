@@ -185,7 +185,7 @@ class mine:
         for _row in nearby_row:
             for _col in nearby_col:
                 self.nearby.append(_row*zone_col+_col) # 根据上面得到的周边行列号得到周边区块的index,包括自身的index
-        self.nearby.remove(self.index) # 从周边区块列表中除以自身index
+        self.nearby.remove(self.index) # 从周边区块列表中除移自身index
         self.nearby_bombs = 0
         for near in self.nearby:
             if near in bomb:

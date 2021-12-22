@@ -250,14 +250,14 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
+            if event.button == pygame.BUTTON_LEFT:
                 for dragtarget in dragtargets:
                     dragtarget.dragball.update([event.pos[0],event.pos[1]])
                     if dragtarget.dragball.drag: break
-            elif event.button == 3:
+            elif event.button == pygame.BUTTON_RIGHT:
                 dragtargets.append(DragTarget(sprite_group,[event.pos[0],event.pos[1]]))
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1:
+            if event.button == pygame.BUTTON_LEFT:
                 for dragtarget in dragtargets:
                     dragtarget.dragball.drag = False
         elif event.type == pygame.MOUSEMOTION:
